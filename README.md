@@ -1,6 +1,38 @@
-# How to Run Test Cases 
+# Task A: Appointment Slot Recommender
+## System Description
 
-This document explains how to run the provided test cases for the `is_allocation_feasible` function using **pytest**.
+You are asked to implement Python functions that can recommend available meeting slots given working hours, busy intervals, meeting duration, optional buffer time, and a candidate window. The function must return chronologically ordered suggestions that fit within working hours and do not overlap busy intervals under buffering rules. It must handle edge cases such as adjacent intervals, tiny gaps, and buffers eliminating availability.
+
+Inputs include: (i) a list of medications with frequencies and permissible time windows;
+(ii) user quiet hours during which notifications must not occur;
+(iii) a maximum notification rate (e.g., no more than 𝑘 reminders per hour);
+(iv) an optional snooze operation that shifts a reminder while preserving constraints. The scheduler outputs the next 𝑁 reminders in chronological order and must behave deterministically under ties. 
+
+
+
+## Structure
+
+- **med_scheduler.py** – starter file where you implement. Do not rename this file.
+- **test_med_scheduler.py** – Public tests you can run to check basic correctness. Use a test runner such as `pytest` to execute these tests.
+
+
+
+## Running Tests
+
+1. Install Python 3 if not already installed.
+2. Implement your solution in `med_scheduler.py`.
+3. Optionally create `test_med_scheduler.py` and write at least 5 test cases.
+4. Run tests using:
+
+```
+pytest file_name.py
+```
+
+5. Fix any failing tests before moving on. Remember that hidden tests will check additional requirements
+
+ 
+
+# How to Run Test Cases 
 
 ---
 

@@ -14,13 +14,6 @@ Inputs include:
 
 The scheduler outputs the next N reminders in chronological order and must behave
 deterministically under ties.
-
-Edge cases to handle include:
-  - reminders falling within quiet hours (requiring rescheduling),
-  - collisions between reminders,
-  - snoozes that violate constraints,
-  - infeasible scheduling situations.
-
 See the lab handout for full requirements.
 """
 
