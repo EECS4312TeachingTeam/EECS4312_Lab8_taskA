@@ -120,11 +120,9 @@ def suggest_slots(
         - You are free to choose internal representation; inputs use time-of-day.
         - See lab handout for required slot granularity (e.g., 5-min/15-min steps), if any.
     """
-    # TODO: Implement per lab handout:
-    #  1) Validate inputs (windows, duration, buffer, n, intervals)
-    #  2) Normalize busy_intervals (sort + merge overlaps/adjacent as appropriate)
-    #  3) Apply buffer to busy_intervals when evaluating availability
-    #  4) Compute free intervals inside working_hours (and candidate_window if present)
-    #  5) Generate candidate start times that fit duration within free intervals
-    #  6) Return up to n earliest start times as Slot objects (deterministic)
+
+    ##################################################################
+    # TODO: Implement as per lab handout requirements and constraints.
+    ##################################################################
+    
     raise NotImplementedError("suggest_slots has not been implemented yet")
