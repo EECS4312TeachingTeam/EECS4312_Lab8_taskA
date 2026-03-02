@@ -3,42 +3,53 @@
 
 """
 Task A: Appointment Timeslot Recommender (Stub)
-In this lab, you will design and implement an Appointment Slot Recommender using an LLM assistant as your primary programming collaborator. 
-You are asked to implement a Python module that recommends available meeting slots within a defined working window. 
+
+In this lab, you will design and implement an Appointment Slot Recommender using an LLM assistant
+as your primary programming collaborator.
+
+You are asked to implement a Python module that recommends available meeting slots within a
+defined working window.
+
 The system must:
-•	Accept working hours (start and end time).
-•	Accept a list of existing busy intervals.
-•	Accept a required meeting duration.
-•	Accept an optional buffer time between meetings.
-•	Optionally restrict suggestions to a candidate time window.
-•	Return chronologically ordered appointment slots that satisfy all constraints.
+  • Accept working hours (start and end time).
+  • Accept a list of existing busy intervals.
+  • Accept a required meeting duration.
+  • Accept an optional buffer time between meetings.
+  • Optionally restrict suggestions to a candidate time window.
+  • Return chronologically ordered appointment slots that satisfy all constraints.
 
 The system must ensure that:
-•	Suggested slots fall within working hours.
-•	Suggested slots do not overlap busy intervals.
-•	Buffer time is respected when evaluating availability.
-•	Output ordering is deterministic under identical inputs.
+  • Suggested slots fall within working hours.
+  • Suggested slots do not overlap busy intervals.
+  • Buffer time is respected when evaluating availability.
+  • Output ordering is deterministic under identical inputs.
 
 The module must preserve the following invariants:
-•	Returned slots must be at least as long as the required duration.
-•	No returned slot may violate buffer constraints.
-•	The returned list must reflect the current system state.
+  • Returned slots must be at least as long as the required duration.
+  • No returned slot may violate buffer constraints.
+  • The returned list must reflect the current system state.
 
 The system must correctly handle non-trivial scenarios such as:
-•	Adjacent busy intervals.
-•	Very small gaps between meetings.
-•	Buffers eliminating otherwise valid availability.
-•	Overlapping or unsorted busy intervals.
-•	A meeting duration longer than any available gap.
-•	No availability within the working window.
-The output consists of the next N valid appointment suggestions in chronological order.
+  • Adjacent busy intervals.
+  • Very small gaps between meetings.
+  • Buffers eliminating otherwise valid availability.
+  • Overlapping or unsorted busy intervals.
+  • A meeting duration longer than any available gap.
+  • No availability within the working window.
 
+Output:
+  The output consists of the next N valid appointment suggestions in chronological order.
+  Behavior must be deterministic under ties (if any).
+
+See the lab handout for full requirements.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, time
+from datetime import date, datetime, timedelta, time
 from typing import List, Optional, Tuple
 
+
+# ---------------- Data Models ----------------
 
 @dataclass(frozen=True)
 class TimeWindow:
@@ -51,89 +62,69 @@ class TimeWindow:
 
 
 @dataclass(frozen=True)
-class Medication:
+class BusyInterval:
     """
-    Medication definition.
-      - name: unique medication name
-      - every: frequency between reminders (e.g., timedelta(hours=8))
-      - windows: allowed time windows during a day
+    A busy interval on the given day.
+    Invariant: start < end
     """
-    name: str
-    every: timedelta
-    windows: Tuple[TimeWindow, ...]
+    start: time
+    end: time
 
 
 @dataclass(frozen=True)
-class Reminder:
+class Slot:
     """
-    A scheduled reminder.
-    Deterministic ordering must be defined (e.g., sort by (when, med_name)).
+    A recommended appointment slot.
+
+    start_time is a time-of-day within the working window.
+    Deterministic ordering: sort by start_time ascending.
     """
-    when: datetime
-    med_name: str
+    start_time: time
 
 
 class InfeasibleSchedule(Exception):
-    """Raised when constraints make scheduling impossible."""
+    """Raised when no valid slots can be produced (if required by handout)."""
     pass
 
 
-class SnoozeViolation(Exception):
-    """Raised when a snooze request cannot be satisfied under constraints."""
-    pass
+# ---------------- Core Function ----------------
 
-
-def next_reminders(
-    start: datetime,
-    meds: List[Medication],
-    quiet_hours: Optional[TimeWindow],
-    max_per_hour: int,
-    n: int
-) -> List[Reminder]:
+def suggest_slots(
+    day: date,
+    working_hours: TimeWindow,
+    busy_intervals: List[BusyInterval],
+    duration: timedelta,
+    n: int,
+    buffer: timedelta = timedelta(0),
+    candidate_window: Optional[TimeWindow] = None
+) -> List[Slot]:
     """
-    Generate the next n reminders >= start.
+    Suggest up to the next n valid appointment slots (start times) for the given day.
 
     Args:
-        start: starting datetime (inclusive).
-        meds: list of medications to schedule.
-        quiet_hours: daily quiet hours window where reminders must NOT occur (or None).
-        max_per_hour: maximum reminders allowed per hour (k).
-        n: number of reminders to output.
+        day: the calendar day for which to suggest slots.
+        working_hours: the allowed working window for meetings (start < end).
+        busy_intervals: list of busy time intervals (may be overlapping / unsorted).
+        duration: required meeting length (must be > 0).
+        n: maximum number of slot suggestions to return (n >= 0).
+        buffer: optional buffer time required between meetings (buffer >= 0).
+        candidate_window: optional extra restriction on suggestions (must lie within this window too).
 
     Returns:
-        A list of n reminders in chronological order with deterministic tie-breaking.
+        A list of Slot objects, sorted by start_time ascending, deterministic under identical inputs.
+        If no suitable time slots are available, return an empty list.
 
-    Raises:
-        InfeasibleSchedule: if it is impossible to schedule under constraints.
+    Notes:
+        - Suggested slots must fall within working_hours (and candidate_window if provided).
+        - Suggested slots must not overlap busy_intervals, considering buffer time.
+        - You are free to choose internal representation; inputs use time-of-day.
+        - See lab handout for required slot granularity (e.g., 5-min/15-min steps), if any.
     """
-    # TODO: Implement scheduling algorithm per lab handout
-    raise NotImplementedError("next_reminders has not been implemented yet")
-
-
-def snooze_reminder(
-    reminders: List[Reminder],
-    target: Reminder,
-    snooze_by: timedelta,
-    meds: List[Medication],
-    quiet_hours: Optional[TimeWindow],
-    max_per_hour: int
-) -> List[Reminder]:
-    """
-    Apply a snooze operation to a previously scheduled reminder, and return an updated schedule.
-
-    Args:
-        reminders: current reminder list (chronological, deterministic).
-        target: the reminder to snooze.
-        snooze_by: timedelta to shift the reminder (typically forward).
-        meds: medication definitions (same as scheduling).
-        quiet_hours: quiet window (same as scheduling).
-        max_per_hour: rate limit (same as scheduling).
-
-    Returns:
-        Updated reminders list that still satisfies all constraints and remains deterministic.
-
-    Raises:
-        SnoozeViolation or InfeasibleSchedule: if snooze cannot be satisfied.
-    """
-    # TODO: Implement snooze behavior per lab handout
-    raise NotImplementedError("snooze_reminder has not been implemented yet")
+    # TODO: Implement per lab handout:
+    #  1) Validate inputs (windows, duration, buffer, n, intervals)
+    #  2) Normalize busy_intervals (sort + merge overlaps/adjacent as appropriate)
+    #  3) Apply buffer to busy_intervals when evaluating availability
+    #  4) Compute free intervals inside working_hours (and candidate_window if present)
+    #  5) Generate candidate start times that fit duration within free intervals
+    #  6) Return up to n earliest start times as Slot objects (deterministic)
+    raise NotImplementedError("suggest_slots has not been implemented yet")
