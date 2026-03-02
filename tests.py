@@ -66,7 +66,7 @@ def assert_slots_basic_constraints(
             assert not overlaps(slot_start, slot_end, b_start, b_end)
 
 
-# ---------- Tests (updated from a1–a5) ----------
+# ---------- Tests ----------
 
 def test_a1_no_busy_simple_slots():
     """
