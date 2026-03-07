@@ -179,3 +179,137 @@ def test_a5_buffer_eliminates_small_gaps():
 #################################################################################
 # Add your own additional tests here to cover more cases and edge cases as needed.
 #################################################################################
+
+# ---------------- Test 1 ----------------
+# Corresponds to AC1
+# AC1: Given overlapping/unsorted busy intervals, the system normalizes them.
+
+def test_busy_interval_normalization():
+
+    day = date(2026, 3, 7)
+
+    working_hours = TimeWindow(time(9,0), time(17,0))
+
+    busy = [
+        BusyInterval(time(10,30), time(11,0)),
+        BusyInterval(time(10,0), time(10,45)),  # overlap
+    ]
+
+    slots = suggest_slots(
+        day,
+        working_hours,
+        busy,
+        timedelta(minutes=30),
+        n=1,
+        buffer=timedelta(minutes=0)
+    )
+
+    # After merging -> busy becomes 10:00–11:00
+    # First valid slot should be 09:00
+    assert slots[0].start_time == time(9,0)
+
+
+# ---------------- Test 2 ----------------
+# Corresponds to AC2
+# Given working hours and no busy intervals, system returns earliest slots.
+
+def test_no_busy_intervals():
+
+    day = date(2026,3,7)
+
+    working_hours = TimeWindow(time(9,0), time(11,0))
+
+    slots = suggest_slots(
+        day,
+        working_hours,
+        [],
+        timedelta(minutes=30),
+        n=2,
+        buffer=timedelta(minutes=0)
+    )
+
+    assert slots[0].start_time == time(9,0)
+    assert slots[1].start_time == time(9,30)
+
+
+# ---------------- Test 3 ----------------
+# Corresponds to AC3
+# Buffer must prevent overlap near busy intervals.
+
+def test_buffer_respected_near_busy():
+
+    day = date(2026,3,7)
+
+    working_hours = TimeWindow(time(9,0), time(12,0))
+
+    busy = [
+        BusyInterval(time(10,0), time(10,30))
+    ]
+
+    slots = suggest_slots(
+        day,
+        working_hours,
+        busy,
+        timedelta(minutes=30),
+        n=2,
+        buffer=timedelta(minutes=10)
+    )
+
+    # First slot should still be 9:00
+    # Second must respect buffer after busy interval
+    assert slots[0].start_time == time(9,0)
+    assert slots[1].start_time == time(10,40)
+
+
+# ---------------- Test 4 (Edge Case) ----------------
+# Edge Case: Meeting longer than any available gap
+
+def test_duration_longer_than_gap():
+
+    day = date(2026,3,7)
+
+    working_hours = TimeWindow(time(9,0), time(10,0))
+
+    busy = [
+        BusyInterval(time(9,15), time(9,45))
+    ]
+
+    slots = suggest_slots(
+        day,
+        working_hours,
+        busy,
+        timedelta(minutes=30),
+        n=2,
+        buffer=timedelta(minutes=0)
+    )
+
+    # No gap large enough
+    assert slots == []
+
+
+# ---------------- Test 5 (Edge Case) ----------------
+# Edge Case: Adjacent busy intervals
+
+def test_adjacent_busy_intervals():
+
+    day = date(2026,3,7)
+
+    working_hours = TimeWindow(time(9,0), time(12,0))
+
+    busy = [
+        BusyInterval(time(10,0), time(10,30)),
+        BusyInterval(time(10,30), time(11,0))
+    ]
+
+    slots = suggest_slots(
+        day,
+        working_hours,
+        busy,
+        timedelta(minutes=30),
+        n=2,
+        buffer=timedelta(minutes=0)
+    )
+
+    # Adjacent intervals merge -> 10:00–11:00
+    assert slots[0].start_time == time(9,0)
+    assert slots[1].start_time == time(9,30)
